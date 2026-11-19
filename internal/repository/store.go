@@ -98,15 +98,14 @@ func (s *Store) EnsureUser(ctx context.Context, u User) (User, error) {
 		u.Role = "captain"
 	}
 	err := s.pool.QueryRow(ctx, `
-		INSERT INTO users (s95_user_id, s95_athlete_id, athlete_code, name, role)
-		VALUES (NULLIF($1, 0), $2, $3, $4, $5)
+		INSERT INTO users (s95_user_id, s95_athlete_id, name, role)
+		VALUES (NULLIF($1, 0), $2, $3, $4)
 		ON CONFLICT (s95_athlete_id) DO UPDATE
 		SET name = EXCLUDED.name,
-		    athlete_code = EXCLUDED.athlete_code,
 		    role = CASE WHEN users.role = 'admin' THEN users.role ELSE EXCLUDED.role END
-		RETURNING id, COALESCE(s95_user_id, 0), s95_athlete_id, athlete_code, name, role`,
-		u.S95UserID, u.S95AthleteID, u.AthleteCode, u.Name, u.Role).
-		Scan(&u.ID, &u.S95UserID, &u.S95AthleteID, &u.AthleteCode, &u.Name, &u.Role)
+		RETURNING id, COALESCE(s95_user_id, 0), s95_athlete_id, name, role`,
+		u.S95UserID, u.S95AthleteID, u.Name, u.Role).
+		Scan(&u.ID, &u.S95UserID, &u.S95AthleteID, &u.Name, &u.Role)
 	return u, err
 }
 

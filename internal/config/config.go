@@ -58,7 +58,7 @@ type AuthConfig struct {
 	JWTSecret         string
 	JWTTTL            time.Duration
 	DevAuthEnabled    bool
-	AdminAthleteCodes []int64
+	AdminAthleteIDs []int64
 }
 
 type RegistrationConfig struct {
@@ -108,7 +108,7 @@ func Load(path string) (*Config, error) {
 			JWTSecret:         v.GetString("auth.jwt_secret"),
 			JWTTTL:            time.Duration(v.GetInt("auth.jwt_ttl_hours")) * time.Hour,
 			DevAuthEnabled:    v.GetBool("auth.dev_auth_enabled"),
-			AdminAthleteCodes: intSliceToInt64(v.GetIntSlice("auth.admin_athlete_codes")),
+			AdminAthleteIDs: adminAthleteIDsFromViper(v),
 		},
 		Registration: RegistrationConfig{
 			DeadlineBeforeStage: time.Duration(v.GetInt("registration.deadline_hours_before_stage")) * time.Hour,
@@ -119,8 +119,10 @@ func Load(path string) (*Config, error) {
 		},
 	}
 
-	if raw := os.Getenv("CUP_AUTH_ADMIN_ATHLETE_CODES"); raw != "" {
-		cfg.Auth.AdminAthleteCodes = parseAthleteCodes(raw)
+	if raw := os.Getenv("CUP_AUTH_ADMIN_ATHLETE_IDS"); raw != "" {
+		cfg.Auth.AdminAthleteIDs = parseAthleteIDs(raw)
+	} else if raw := os.Getenv("CUP_AUTH_ADMIN_ATHLETE_CODES"); raw != "" {
+		cfg.Auth.AdminAthleteIDs = parseAthleteIDs(raw)
 	}
 
 	if err := cfg.Validate(); err != nil {
@@ -129,7 +131,14 @@ func Load(path string) (*Config, error) {
 	return cfg, nil
 }
 
-func parseAthleteCodes(raw string) []int64 {
+func adminAthleteIDsFromViper(v *viper.Viper) []int64 {
+	if ids := intSliceToInt64(v.GetIntSlice("auth.admin_athlete_ids")); len(ids) > 0 {
+		return ids
+	}
+	return intSliceToInt64(v.GetIntSlice("auth.admin_athlete_codes"))
+}
+
+func parseAthleteIDs(raw string) []int64 {
 	parts := strings.FieldsFunc(raw, func(r rune) bool {
 		return r == ',' || r == ' ' || r == ';'
 	})

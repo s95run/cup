@@ -5,6 +5,7 @@ import (
 	"crypto/subtle"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -146,7 +147,7 @@ func (s *Server) handleS95Login(w http.ResponseWriter, r *http.Request) {
 		Name: "cup_oauth_state", Value: state, Path: "/", HttpOnly: true,
 		Secure: s.cfg.Server.CookieSecure, SameSite: http.SameSiteLaxMode, MaxAge: 600,
 	})
-	redirect := s.cfg.S95.BaseURL + "/cup_sso?return_to=" + s.cfg.Server.PublicURL + "/api/v1/auth/s95/callback&state=" + state
+	redirect := s.cfg.S95.BaseURL + "/cup_sso?" + url.Values{"state": {state}}.Encode()
 	http.Redirect(w, r, redirect, http.StatusFound)
 }
 
@@ -176,11 +177,11 @@ func (s *Server) handleS95Callback(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "sso token replay", http.StatusUnauthorized)
 		return
 	}
-	role := s.roleForAthleteCode(payload.AthleteCode)
+	role := s.roleForAthleteID(payload.AthleteID)
 	var userID int64
 	if s.store != nil {
 		user, err := s.store.EnsureUser(r.Context(), repository.User{
-			S95UserID: payload.UserID, S95AthleteID: payload.AthleteID, AthleteCode: payload.AthleteCode,
+			S95UserID: payload.UserID, S95AthleteID: payload.AthleteID,
 			Name: payload.Name, Role: role,
 		})
 		if err != nil {
@@ -200,9 +201,9 @@ func (s *Server) handleLogout(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (s *Server) roleForAthleteCode(code int64) string {
-	for _, adminCode := range s.cfg.Auth.AdminAthleteCodes {
-		if adminCode == code {
+func (s *Server) roleForAthleteID(athleteID int64) string {
+	for _, adminID := range s.cfg.Auth.AdminAthleteIDs {
+		if adminID == athleteID {
 			return "admin"
 		}
 	}
@@ -211,22 +212,22 @@ func (s *Server) roleForAthleteCode(code int64) string {
 
 func (s *Server) handleDevLogin(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		AthleteID   int64  `json:"athlete_id"`
-		AthleteCode int64  `json:"athlete_code"`
-		Name        string `json:"name"`
+		AthleteID int64  `json:"athlete_id"`
+		Name      string `json:"name"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "bad json", http.StatusBadRequest)
 		return
 	}
-	if body.AthleteCode == 0 {
-		body.AthleteCode = body.AthleteID
+	if body.AthleteID == 0 {
+		http.Error(w, "athlete_id required", http.StatusBadRequest)
+		return
 	}
-	role := s.roleForAthleteCode(body.AthleteCode)
+	role := s.roleForAthleteID(body.AthleteID)
 	var userID int64
 	if s.store != nil {
 		user, err := s.store.EnsureUser(r.Context(), repository.User{
-			S95AthleteID: body.AthleteID, AthleteCode: body.AthleteCode, Name: body.Name, Role: role,
+			S95AthleteID: body.AthleteID, Name: body.Name, Role: role,
 		})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

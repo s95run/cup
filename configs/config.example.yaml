@@ -24,7 +24,7 @@ auth:
   jwt_secret: "change-me-jwt-secret-min-32-chars-long"
   jwt_ttl_hours: 168
   dev_auth_enabled: false
-  admin_athlete_codes: []
+  admin_athlete_ids: []
 
 registration:
   deadline_hours_before_stage: 168

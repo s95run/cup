@@ -3,7 +3,7 @@ import { ref } from "vue";
 import { useSession } from "../stores/session";
 
 const session = useSession();
-const athleteID = ref(770000099);
+const athleteID = ref(99);
 const name = ref("Капитан");
 const error = ref("");
 const pending = ref(false);
@@ -27,10 +27,10 @@ async function submit() {
     <a class="btn btn-brand" href="/api/v1/auth/s95/login">Войти через S95</a>
     <form v-if="session.devLogin" class="space-y-2" @submit.prevent="submit">
       <p class="text-sm text-ink-muted">
-        Локальный вход. Админ определяется кодом из <code>admin_athlete_codes</code> (например 770000001), капитан — 770000099.
+        Локальный вход. Админ — по <code>admin_athlete_ids</code> (внутренний <code>athlete_id</code> в S95, например 1), капитан — 99.
       </p>
       <label class="block text-sm">
-        Код атлета
+        ID атлета (S95)
         <input v-model.number="athleteID" class="field mt-1" type="number" required />
       </label>
       <label class="block text-sm">

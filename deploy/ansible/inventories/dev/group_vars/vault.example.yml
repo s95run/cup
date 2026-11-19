@@ -3,4 +3,4 @@ cup_db_password: replace-with-vault
 cup_jwt_secret: replace-with-random-32-chars-minimum
 cup_sso_secret: replace-with-random-32-chars-minimum
 cup_s95_api_key: replace-with-s95-api-key
-cup_admin_athlete_codes: "770000001"
+cup_admin_athlete_ids: "1"

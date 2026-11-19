@@ -27,7 +27,7 @@ export const useSession = defineStore("session", {
     async loginDev(athleteID: number, name: string) {
       await api("/api/v1/auth/dev-login", {
         method: "POST",
-        body: JSON.stringify({ athlete_id: athleteID, athlete_code: athleteID, name }),
+        body: JSON.stringify({ athlete_id: athleteID, name }),
       });
       this.user = await api<SessionUser>("/api/v1/auth/me");
     },

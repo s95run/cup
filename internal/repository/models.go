@@ -14,7 +14,6 @@ type User struct {
 	ID           int64
 	S95UserID    int64
 	S95AthleteID int64
-	AthleteCode  int64
 	Name         string
 	Role         string
 }

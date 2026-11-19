@@ -47,7 +47,7 @@ func TestProtocolKeepsBonus(t *testing.T) {
 	}
 	suffix := time.Now().UnixNano()
 	user, err := store.EnsureUser(ctx, repository.User{
-		S95AthleteID: suffix, AthleteCode: suffix, Name: "Капитан тест", Role: "captain",
+		S95AthleteID: suffix, Name: "Капитан тест", Role: "captain",
 	})
 	if err != nil {
 		t.Fatal(err)

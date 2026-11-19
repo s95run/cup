@@ -20,11 +20,9 @@ var (
 type SSOPayload struct {
 	UserID        int64  `json:"user_id"`
 	AthleteID     int64  `json:"athlete_id"`
-	AthleteCode   int64  `json:"athlete_code"`
 	Name          string `json:"name"`
 	Gender        string `json:"gender"`
 	HomeEventCode string `json:"home_event_code"`
-	IsAdmin       bool   `json:"is_admin"`
 	JTI           string `json:"jti"`
 	State         string `json:"state"`
 	Exp           int64  `json:"exp"`
