@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: cup_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cup_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  cup-api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.api
+    environment:
+      CUP_CONFIG: /app/configs/config.example.yaml
+      CUP_ALLOW_EXAMPLE_CONFIG: "true"
+      CUP_AUTH_DEV_AUTH_ENABLED: "true"
+      CUP_DB_HOST: postgres
+      CUP_DB_PORT: 5432
+      CUP_DB_DBNAME: cup_dev
+      CUP_DB_USER: cup_app
+      CUP_DB_PASSWORD: cup_app_dev
+      CUP_DB_SCHEMA: cup
+      CUP_S95_MOCK: "true"
+    ports:
+      - "8080:8080"
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["/app/cup-api -migrate-only && exec /app/cup-api"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  cup-web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+    ports:
+      - "3000:80"
+    depends_on:
+      - cup-api

@@ -1,0 +1,18 @@
+services:
+  cup-api:
+    image: ghcr.io/s95run/cup-api:${CUP_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file:
+      - /etc/cup/cup.env
+    ports:
+      - "127.0.0.1:8080:8080"
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["/app/cup-api -migrate-only && exec /app/cup-api"]
+
+  cup-web:
+    image: ghcr.io/s95run/cup-web:${CUP_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:80"
+    depends_on:
+      - cup-api

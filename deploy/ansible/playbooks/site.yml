@@ -1,0 +1,16 @@
+---
+- name: Prepare the shared PostgreSQL host
+  hosts: data
+  become: true
+  roles:
+    - role: postgres_shared_host
+      when: cup_bootstrap_postgres | default(false) | bool
+    - role: postgres_service_schema
+
+- name: Deploy cup on vm-app
+  hosts: app
+  become: true
+  roles:
+    - role: docker
+    - role: cup_deploy
+    - role: haproxy_vhost

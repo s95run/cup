@@ -1,0 +1,6 @@
+---
+- name: Reload PostgreSQL
+  community.postgresql.postgresql_query:
+    query: SELECT pg_reload_conf()
+  become: true
+  become_user: postgres

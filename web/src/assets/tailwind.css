@@ -1,0 +1,209 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --color-iris-50: #eef0f6;
+  --color-iris-100: #d9dce8;
+  --color-iris-300: #b4b3d4;
+  --color-iris-400: #5c57b0;
+  --color-iris-500: #35345f;
+  --color-iris-600: #2a2951;
+  --color-iris-900: #1f1e3d;
+  --color-iris-950: #141328;
+
+  --color-coral-50: #f8eef1;
+  --color-coral-400: #e08a96;
+  --color-coral-600: #c4526a;
+  --color-coral-700: #a34456;
+
+  --color-mist-50: #f3f3f7;
+  --color-mist-100: #e8e8ee;
+  --color-mist-200: #d4d4de;
+  --color-mist-500: #5a5a6c;
+  --color-mist-800: #1c1c28;
+  --color-mist-900: #12121a;
+
+  --color-moss: #2f7a52;
+  --color-flame: #c63b3b;
+  --color-amber: #c4923a;
+
+  --color-canvas: var(--color-mist-50);
+  --color-surface: #ffffff;
+  --color-surface-elevated: #f7f7fb;
+  --color-ink: #1c1c28;
+  --color-ink-muted: #5a5a6c;
+  --color-line: var(--color-mist-200);
+  --color-brand: var(--color-iris-600);
+  --color-brand-fill: var(--color-iris-500);
+  --color-brand-fg: #ffffff;
+  --color-link: var(--color-iris-400);
+  --color-accent: var(--color-coral-600);
+  --color-accent-fg: #ffffff;
+  --color-accent-subtle: var(--color-coral-50);
+  --color-success: var(--color-moss);
+  --color-success-fg: #ffffff;
+  --color-success-subtle: #e8f5ee;
+  --color-danger: var(--color-flame);
+  --color-danger-fg: #ffffff;
+  --color-danger-subtle: #fdeaea;
+  --color-warning: var(--color-amber);
+  --color-warning-fg: #1c1c28;
+  --color-warning-subtle: #fef6e8;
+  --color-focus-ring: var(--color-iris-300);
+  --color-nav: var(--color-iris-600);
+  --color-nav-fg: #ffffff;
+}
+
+.dark {
+  --color-canvas: #12121a;
+  --color-surface: #1a1a26;
+  --color-surface-elevated: #252536;
+  --color-ink: #f0f0f5;
+  --color-ink-muted: #a8a8bc;
+  --color-line: rgb(255 255 255 / 12%);
+  --color-brand: var(--color-iris-300);
+  --color-brand-fill: #3f3e6e;
+  --color-brand-fg: #ffffff;
+  --color-link: var(--color-iris-300);
+  --color-accent: var(--color-coral-400);
+  --color-accent-fg: #12121a;
+  --color-accent-subtle: rgb(224 138 150 / 15%);
+  --color-success-subtle: rgb(47 122 82 / 20%);
+  --color-danger-subtle: rgb(198 59 59 / 20%);
+  --color-warning-subtle: rgb(196 146 58 / 20%);
+  --color-focus-ring: var(--color-iris-300);
+  --color-nav: var(--color-iris-600);
+  --color-nav-fg: #ffffff;
+}
+
+@theme {
+  --color-canvas: var(--color-canvas);
+  --color-surface: var(--color-surface);
+  --color-surface-elevated: var(--color-surface-elevated);
+  --color-ink: var(--color-ink);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-line: var(--color-line);
+  --color-brand: var(--color-brand);
+  --color-brand-fill: var(--color-brand-fill);
+  --color-brand-fg: var(--color-brand-fg);
+  --color-link: var(--color-link);
+  --color-accent: var(--color-accent);
+  --color-accent-fg: var(--color-accent-fg);
+  --color-accent-subtle: var(--color-accent-subtle);
+  --color-success: var(--color-success);
+  --color-success-fg: var(--color-success-fg);
+  --color-success-subtle: var(--color-success-subtle);
+  --color-danger: var(--color-danger);
+  --color-danger-fg: var(--color-danger-fg);
+  --color-danger-subtle: var(--color-danger-subtle);
+  --color-warning: var(--color-warning);
+  --color-warning-fg: var(--color-warning-fg);
+  --color-warning-subtle: var(--color-warning-subtle);
+  --color-nav: var(--color-nav);
+  --color-nav-fg: var(--color-nav-fg);
+  --color-focus-ring: var(--color-focus-ring);
+  --font-sans: "Golos Text", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Unbounded", var(--font-sans);
+}
+
+@font-face {
+  font-family: "Golos Text";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/golos-text.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Unbounded";
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url("/fonts/unbounded.woff2") format("woff2");
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply m-0 min-h-screen bg-canvas font-sans text-ink antialiased;
+  }
+  a {
+    @apply text-link;
+  }
+  h1, h2, h3 {
+    @apply font-display text-ink;
+  }
+}
+
+@layer components {
+  .page-container {
+    @apply mx-auto w-full max-w-5xl px-4;
+  }
+  .card {
+    @apply rounded-xl border border-line bg-surface p-4;
+  }
+  .data-table-shell {
+    @apply min-w-0 max-w-full overflow-x-auto rounded-lg border border-line;
+  }
+  .data-table {
+    @apply w-full max-w-full text-sm;
+  }
+  .data-table > thead > tr {
+    @apply border-b border-line bg-surface-elevated text-left text-ink-muted;
+  }
+  .data-table > thead th {
+    @apply font-medium;
+  }
+  .data-table th,
+  .data-table td {
+    @apply px-2 py-2 align-middle break-words sm:px-3;
+  }
+  .data-table .cell-num {
+    @apply text-end tabular-nums whitespace-nowrap;
+  }
+  .data-table > tbody {
+    @apply divide-y divide-line bg-surface;
+  }
+  .data-table tbody tr.row-button {
+    @apply cursor-pointer hover:bg-surface-elevated;
+  }
+  .radio-tabs {
+    @apply flex flex-wrap gap-2;
+  }
+  .radio-tab-label {
+    @apply cursor-pointer whitespace-nowrap rounded-full bg-surface-elevated px-3 py-1.5 text-sm font-medium text-ink-muted hover:text-ink;
+  }
+  .radio-tab-label--active {
+    @apply bg-accent text-accent-fg hover:text-accent-fg;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-accent {
+    @apply bg-accent text-accent-fg;
+  }
+  .btn-brand {
+    @apply bg-brand text-brand-fg;
+  }
+  .btn-ghost {
+    @apply border border-line bg-surface text-ink;
+  }
+  .field {
+    @apply w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:outline-2 focus:outline-offset-1 focus:outline-focus-ring;
+  }
+  .badge-ok {
+    @apply rounded-full bg-success-subtle px-2 py-0.5 text-xs text-success;
+  }
+  .badge-bad {
+    @apply rounded-full bg-danger-subtle px-2 py-0.5 text-xs text-danger;
+  }
+  .badge-bonus {
+    @apply cursor-help rounded-full bg-accent-subtle px-2 py-0.5 text-xs font-medium text-accent;
+  }
+}

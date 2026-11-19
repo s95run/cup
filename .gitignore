@@ -1,0 +1,27 @@
+# Binaries
+/bin/
+/dist/
+*.exe
+
+# Go
+/vendor/
+
+# Env and secrets
+.env
+.env.*
+!.env.example
+configs/config.yaml
+configs/config.dev.yaml
+deploy/ansible/inventories/*/group_vars/vault.yml
+
+# Frontend
+web/node_modules/
+web/dist/
+web/tsconfig.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store

@@ -1,0 +1,62 @@
+---
+- name: Require production secrets
+  ansible.builtin.assert:
+    that:
+      - cup_db_password is defined
+      - cup_db_password | length > 0
+      - cup_jwt_secret is defined
+      - cup_jwt_secret | length >= 32
+      - cup_sso_secret is defined
+      - cup_sso_secret | length >= 32
+      - cup_s95_api_key is defined
+      - cup_s95_api_key | length > 0
+    fail_msg: Set cup secrets in an Ansible Vault group_vars file.
+
+- name: Ensure config directory
+  ansible.builtin.file:
+    path: /etc/cup
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Ensure compose directory
+  ansible.builtin.file:
+    path: /opt/cup
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy env file
+  ansible.builtin.template:
+    src: cup.env.j2
+    dest: /etc/cup/cup.env
+    owner: root
+    group: root
+    mode: "0640"
+  no_log: true
+
+- name: Install production compose file
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../docker-compose.prod.yml"
+    dest: /opt/cup/docker-compose.prod.yml
+    mode: "0644"
+
+- name: Start cup stack
+  community.docker.docker_compose_v2:
+    project_src: /opt/cup
+    files:
+      - docker-compose.prod.yml
+    state: present
+  environment:
+    CUP_IMAGE_TAG: "{{ cup_image_tag }}"
+
+- name: Wait for the API healthcheck
+  ansible.builtin.uri:
+    url: http://127.0.0.1:8080/api/v1/healthz
+    status_code: 200
+  register: cup_deploy_health
+  retries: 12
+  delay: 5
+  until: cup_deploy_health.status == 200

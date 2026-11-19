@@ -1,0 +1,132 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.11"
+      - name: govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          "$(go env GOPATH)/bin/govulncheck" ./...
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: npm audit
+        working-directory: web
+        run: |
+          npm ci
+          npm audit --omit=dev --audit-level=high
+
+  lint:
+    needs: security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.11"
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v9.3.0
+        with:
+          version: v2.15.0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: ansible-lint
+        run: |
+          pip install ansible-core ansible-lint
+          export ANSIBLE_ROLES_PATH="$PWD/deploy/ansible/roles"
+          ansible-galaxy collection install -r deploy/ansible/collections/requirements.yml
+          ansible-lint deploy/ansible/playbooks/site.yml
+          ansible-playbook deploy/ansible/playbooks/site.yml -i deploy/ansible/inventories/dev --syntax-check
+          ansible-playbook deploy/ansible/playbooks/site.yml -i deploy/ansible/inventories/prod --syntax-check
+
+  backend:
+    needs: lint
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: cup_dev
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d cup_dev"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.11"
+      - name: Init cup schema
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d cup_dev -f deploy/postgres-init/01-cup-schema.sql
+      - run: go test -race ./...
+        env:
+          CUP_DB_HOST: localhost
+          CUP_DB_PORT: 5432
+          CUP_DB_DBNAME: cup_dev
+          CUP_DB_USER: cup_app
+          CUP_DB_PASSWORD: cup_app_dev
+          CUP_DB_SCHEMA: cup
+
+  frontend:
+    needs: lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:unit
+
+  docker:
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile.api
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: |
+            ghcr.io/s95run/cup-api:${{ github.sha }}
+            ghcr.io/s95run/cup-api:latest
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile.web
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: |
+            ghcr.io/s95run/cup-web:${{ github.sha }}
+            ghcr.io/s95run/cup-web:latest

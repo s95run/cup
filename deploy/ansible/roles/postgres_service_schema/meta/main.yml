@@ -1,0 +1,10 @@
+galaxy_info:
+  author: s95run
+  description: Isolated cup schema and role on the shared PostgreSQL host.
+  license: proprietary
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+dependencies: []

@@ -1,0 +1,59 @@
+---
+- name: Require the cup database password
+  ansible.builtin.assert:
+    that:
+      - cup_db_password is defined
+      - cup_db_password | length > 0
+    fail_msg: Set cup_db_password in an Ansible Vault group_vars file.
+
+- name: Ensure cup_app role exists
+  community.postgresql.postgresql_user:
+    name: cup_app
+    password: "{{ cup_db_password }}"
+    role_attr_flags: LOGIN
+  become: true
+  become_user: postgres
+
+- name: Ensure cup database exists
+  community.postgresql.postgresql_db:
+    name: "{{ shared_db_name }}"
+    owner: cup_app
+  become: true
+  become_user: postgres
+
+- name: Ensure cup schema
+  community.postgresql.postgresql_schema:
+    schema: cup
+    owner: cup_app
+    login_db: "{{ shared_db_name }}"
+  become: true
+  become_user: postgres
+
+- name: Isolate cup_app from other schemas
+  community.postgresql.postgresql_query:
+    login_db: "{{ shared_db_name }}"
+    query: "{{ item }}"
+  loop:
+    - GRANT CONNECT ON DATABASE {{ shared_db_name }} TO cup_app
+    - GRANT USAGE, CREATE ON SCHEMA cup TO cup_app
+    - ALTER ROLE cup_app IN DATABASE {{ shared_db_name }} SET search_path TO cup
+    - REVOKE ALL ON SCHEMA public FROM cup_app
+    - REVOKE ALL ON SCHEMA public FROM PUBLIC
+  become: true
+  become_user: postgres
+
+- name: Read pg_hba.conf path
+  ansible.builtin.command: psql -tAc "SHOW hba_file"
+  become: true
+  become_user: postgres
+  changed_when: false
+  register: postgres_service_schema_hba_file
+
+- name: Allow cup_app from vm-app
+  ansible.builtin.lineinfile:
+    path: "{{ postgres_service_schema_hba_file.stdout | trim }}"
+    regexp: '^host\s+{{ shared_db_name }}\s+cup_app\s+{{ hostvars[groups["app"][0]].ansible_host }}/32\s+'
+    line: >-
+      host {{ shared_db_name }} cup_app
+      {{ hostvars[groups['app'][0]].ansible_host }}/32 scram-sha-256
+  notify: Reload PostgreSQL

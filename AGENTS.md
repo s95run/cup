@@ -64,9 +64,13 @@ Go (chi, pgx, goose, Viper, golang-jwt), Vue 3 + Vite + Tailwind v4, PostgreSQL 
 
 ### CI (`.github/workflows/ci.yml`)
 
-- Job **backend**: Postgres 17, init схемы `cup`, `go test -race ./...`.
-- Job **frontend**: `npm ci`, `npm run build`, `npm run test:unit`.
-- **(цель)**: job security (`govulncheck`, audit npm), `golangci-lint` в CI, настоящий ESLint для `web`, сборка образов в ghcr с тегом git SHA вместо `:latest`.
+Порядок: security → lint → test → docker. Публикация образов в GHCR только из `main`.
+
+- **security**: `govulncheck ./...`, `npm audit --audit-level=high`.
+- **lint**: `golangci-lint`, `ansible-lint`, `ansible-playbook --syntax-check` для dev и prod.
+- **backend**: Postgres 17, init схемы `cup`, `go test -race ./...`.
+- **frontend**: `npm ci`, `npm run build`, `npm run test:unit`.
+- **docker**: сборка `cup-api` и `cup-web`; push тегов `:<sha>` и `:latest` при push в `main`.
 
 ## Конфиг
 
@@ -75,5 +79,5 @@ Go (chi, pgx, goose, Viper, golang-jwt), Vue 3 + Vite + Tailwind v4, PostgreSQL 
 ## Deploy
 
 - Образы `ghcr.io/s95run/cup-api`, `ghcr.io/s95run/cup-web`; `deploy/docker-compose.prod.yml`, env — `/etc/cup/cup.env` на vm-app.
-- Ansible: `deploy/ansible/playbooks/site.yml`, inventory `inventories/dev` (vm-app, vm-data).
+- Ansible: `deploy/ansible/playbooks/site.yml`, inventory `inventories/dev` и `inventories/prod`. Роли: `postgres_shared_host` (только при `cup_bootstrap_postgres`), `postgres_service_schema`, `docker`, `cup_deploy`, `haproxy_vhost`.
 - БД: схема `cup`, роль `cup_app` на vm-data.
