@@ -24,9 +24,9 @@
 ### Окружения
 
 - Облако **Nubes** (VMware Cloud Director). Инфраструктура — репозиторий `s95run/terraform`: `live/dev` (рабочее), `live/prod` (заготовка).
-- **vm-app** — сервисы в Docker Compose за nginx, порты только на `127.0.0.1`.
-- **vm-data** — общий PostgreSQL: у каждого сервиса своя схема и роль `<service>_app`; в чужие схемы не ходить. Bootstrap схемы — Ansible-роль `postgres_service_schema`.
-- Деплой — Ansible (`deploy/ansible`), образы `ghcr.io/s95run/<service>-<component>`.
+- **vm-app** — HAProxy (`80/443`), сервисы в Docker Compose; контейнерные порты только на `127.0.0.1`. Vhost HAProxy — роль `haproxy_vhost` из `s95run/ansible`.
+- **vm-data** — общий PostgreSQL: схема и роль `<service>_app`; bootstrap — `s95run/ansible` (`postgres_tenant`).
+- Платформа — `s95run/ansible`; деплой приложения — `deploy/ansible` под `deploy-<service>`, образы `ghcr.io/s95run/<service>-<component>`.
 - Секреты в git не коммитить: на VM — `/etc/<service>/<service>.env`, в CI — GitHub Secrets; `terraform.tfvars`, `backend.hcl`, state — только локально или в S3.
 
 ### Стек (эталоны)
@@ -79,5 +79,6 @@ Go (chi, pgx, goose, Viper, golang-jwt), Vue 3 + Vite + Tailwind v4, PostgreSQL 
 ## Deploy
 
 - Образы `ghcr.io/s95run/cup-api`, `ghcr.io/s95run/cup-web`; `deploy/docker-compose.prod.yml`, env — `/etc/cup/cup.env` на vm-app.
-- Ansible: `deploy/ansible/playbooks/site.yml`, inventory `inventories/dev` и `inventories/prod`. Роли: `postgres_shared_host` (только при `cup_bootstrap_postgres`), `postgres_service_schema`, `docker`, `cup_deploy`, `haproxy_vhost`.
-- БД: схема `cup`, роль `cup_app` на vm-data.
+- Ansible: `deploy/ansible/playbooks/site.yml`, inventory `inventories/dev` и `inventories/prod`; пользователь `deploy-cup`, роли `cup_deploy` и `haproxy_vhost` (из `../../../ansible/roles`).
+- БД: схема `cup`, роль `cup_app` на vm-data (платформенный playbook).
+- CI deploy: job `deploy` в `.github/workflows/ci.yml` после публикации образов (`cup_image_tag` = commit SHA).

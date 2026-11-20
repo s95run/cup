@@ -2,5 +2,4 @@ cup_public_host: cup.s95.ru
 cup_db_host: 192.168.0.12
 shared_db_name: cup
 cup_image_tag: latest
-cup_bootstrap_postgres: false
-ansible_user: ubuntu
+ansible_user: deploy-cup

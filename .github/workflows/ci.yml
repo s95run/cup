@@ -31,6 +31,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: s95run/ansible
+          path: ansible
+          token: ${{ secrets.ANSIBLE_CHECKOUT_TOKEN }}
       - uses: actions/setup-go@v5
         with:
           go-version: "1.26.11"
@@ -44,7 +49,7 @@ jobs:
       - name: ansible-lint
         run: |
           pip install ansible-core ansible-lint
-          export ANSIBLE_ROLES_PATH="$PWD/deploy/ansible/roles"
+          export ANSIBLE_ROLES_PATH="$PWD/deploy/ansible/roles:$PWD/ansible/roles"
           ansible-galaxy collection install -r deploy/ansible/collections/requirements.yml
           ansible-lint deploy/ansible/playbooks/site.yml
           ansible-playbook deploy/ansible/playbooks/site.yml -i deploy/ansible/inventories/dev --syntax-check
@@ -130,3 +135,47 @@ jobs:
           tags: |
             ghcr.io/s95run/cup-web:${{ github.sha }}
             ghcr.io/s95run/cup-web:latest
+
+  deploy:
+    needs: docker
+    if: >-
+      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      vars.CUP_AUTO_DEPLOY == 'true'
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: s95run/ansible
+          path: ansible
+          token: ${{ secrets.ANSIBLE_CHECKOUT_TOKEN }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Ansible
+        run: |
+          pip install ansible-core
+          ansible-galaxy collection install -r deploy/ansible/collections/requirements.yml
+      - name: Configure deploy SSH key
+        env:
+          CUP_DEPLOY_SSH_KEY: ${{ secrets.CUP_DEPLOY_SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$CUP_DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+      - name: Deploy cup to dev
+        working-directory: deploy/ansible
+        env:
+          ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
+        run: |
+          export ANSIBLE_ROLES_PATH="$PWD/roles:$GITHUB_WORKSPACE/ansible/roles"
+          if [ -n "${ANSIBLE_VAULT_PASSWORD:-}" ]; then
+            printf '%s' "$ANSIBLE_VAULT_PASSWORD" > .vault-pass
+            ansible-playbook playbooks/site.yml -i inventories/dev \
+              -e cup_image_tag=${{ github.sha }} \
+              --vault-password-file .vault-pass
+          else
+            ansible-playbook playbooks/site.yml -i inventories/dev \
+              -e cup_image_tag=${{ github.sha }}
+          fi
