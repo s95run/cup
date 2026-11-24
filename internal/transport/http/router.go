@@ -147,7 +147,7 @@ func (s *Server) handleS95Login(w http.ResponseWriter, r *http.Request) {
 		Name: "cup_oauth_state", Value: state, Path: "/", HttpOnly: true,
 		Secure: s.cfg.Server.CookieSecure, SameSite: http.SameSiteLaxMode, MaxAge: 600,
 	})
-	redirect := s.cfg.S95.BaseURL + "/cup_sso?" + url.Values{"state": {state}}.Encode()
+	redirect := s.cfg.S95.BaseURL + "/cup/authorize?" + url.Values{"state": {state}}.Encode()
 	http.Redirect(w, r, redirect, http.StatusFound)
 }
 

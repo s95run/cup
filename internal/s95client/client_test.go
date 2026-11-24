@@ -11,9 +11,9 @@ import (
 
 func TestParseTimeString(t *testing.T) {
 	tests := []struct {
-		in   string
-		sec  int
-		ok   bool
+		in  string
+		sec int
+		ok  bool
 	}{
 		{"23:20", 1400, true},
 		{"1:05:30", 3930, true},
@@ -85,6 +85,31 @@ func TestFetchProtocol_notModified(t *testing.T) {
 	_, err := client.FetchProtocol(context.Background(), "x", "2026-12-05", &known)
 	if err != ErrNotModified {
 		t.Fatalf("got %v", err)
+	}
+}
+
+func TestSearchAthletes_sumsRolesExceptOther(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer key" {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"athletes": []map[string]any{{
+				"id": 7, "code": 770000007, "name": "Анна", "gender": "female",
+				"runs_count":           0,
+				"volunteering_by_role": map[string]int{"marshal": 4, "other": 2, "": 9},
+			}},
+		})
+	}))
+	defer srv.Close()
+
+	hits, err := New(srv.URL, "key", 100).SearchAthletes(context.Background(), "Анна")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(hits) != 1 || hits[0].VolunteeringCount != 4 {
+		t.Fatalf("hits %+v", hits)
 	}
 }
 

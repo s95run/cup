@@ -6,8 +6,8 @@
 
 ## Что добавляется
 
-- `GET /cup_sso` — одноразовый HMAC-редирект на `https://cup.s95.<tld>/api/v1/auth/s95/callback` (`ru`, `rs`, `by`, `kz`); без `return_to` и без `is_admin` / `athlete_code` в токене
-- `GET /api/cup/athletes/search` — поиск атлетов для набора команды (имя или личный код, число забегов и волонтёрств для допуска)
+- `GET /cup/authorize` — одноразовый HMAC-редирект на `https://cup.s95.<tld>/api/v1/auth/s95/callback` (`ru`, `rs`, `by`, `kz`); без `return_to`, без переопределения адреса в credentials и без `is_admin` / `athlete_code` в токене
+- `GET /api/cup/athletes/search` — поиск атлетов (имя или личный код). Отдаёт `runs_count` и `volunteering_by_role`; правило допуска считает Кубок
 
 Протокол этапа Кубок берёт с публичного JSON (`/events/:code_name.json` → `/activities/:id.json`), отдельного эндпоинта не требуется.
 
@@ -17,7 +17,4 @@
 cup:
   api_key: <случайный ключ>
   sso_secret: <не короче 32 байт>
-  # url: http://127.0.0.1:8080  # опционально для локального стенда
-  # urls:
-  #   ru: http://127.0.0.1:8080
 ```

@@ -20,11 +20,11 @@ func NewMock() *Mock {
 			{CodeName: "pechatniki", Name: "Пристань Печатники", Town: "Москва", Active: true},
 		},
 		Athletes: []AthleteSearchHit{
-			{ID: 101, Code: 770000101, Name: "Анна ИВАНОВА", Gender: "female", HomeEventCode: "angarskieprudy", HomeEventName: "Ангарские пруды", ClubName: "Wake&Run", RunsCount: 12, VolunteeringCount: 1},
-			{ID: 102, Code: 770000102, Name: "Мария ПЕТРОВА", Gender: "female", HomeEventCode: "angarskieprudy", HomeEventName: "Ангарские пруды", ClubName: "Wake&Run", RunsCount: 0, VolunteeringCount: 6},
-			{ID: 103, Code: 770000103, Name: "Иван СИДОРОВ", Gender: "male", HomeEventCode: "pechatniki", HomeEventName: "Пристань Печатники", ClubName: "", RunsCount: 4, VolunteeringCount: 0},
-			{ID: 104, Code: 770000104, Name: "Пётр ОРЛОВ", Gender: "male", HomeEventCode: "angarskieprudy", HomeEventName: "Ангарские пруды", ClubName: "", RunsCount: 2, VolunteeringCount: 0},
-			{ID: 105, Code: 770000105, Name: "Олег НОВИКОВ", Gender: "male", HomeEventCode: "angarskieprudy", HomeEventName: "Ангарские пруды", ClubName: "", RunsCount: 8, VolunteeringCount: 2},
+			{ID: 101, Code: 770000101, Name: "Анна ИВАНОВА", Gender: "female", HomeEventCode: "angarskieprudy", HomeEventName: "Ангарские пруды", ClubName: "Wake&Run", RunsCount: 12, VolunteeringByRole: map[string]int{"marshal": 1}},
+			{ID: 102, Code: 770000102, Name: "Мария ПЕТРОВА", Gender: "female", HomeEventCode: "angarskieprudy", HomeEventName: "Ангарские пруды", ClubName: "Wake&Run", RunsCount: 0, VolunteeringByRole: map[string]int{"marshal": 4, "other": 2}},
+			{ID: 103, Code: 770000103, Name: "Иван СИДОРОВ", Gender: "male", HomeEventCode: "pechatniki", HomeEventName: "Пристань Печатники", ClubName: "", RunsCount: 4},
+			{ID: 104, Code: 770000104, Name: "Пётр ОРЛОВ", Gender: "male", HomeEventCode: "angarskieprudy", HomeEventName: "Ангарские пруды", ClubName: "", RunsCount: 2},
+			{ID: 105, Code: 770000105, Name: "Олег НОВИКОВ", Gender: "male", HomeEventCode: "angarskieprudy", HomeEventName: "Ангарские пруды", ClubName: "", RunsCount: 8, VolunteeringByRole: map[string]int{"timer": 2}},
 		},
 	}
 }
@@ -38,6 +38,7 @@ func (m *Mock) SearchAthletes(_ context.Context, q string) ([]AthleteSearchHit, 
 	var out []AthleteSearchHit
 	for _, athlete := range m.Athletes {
 		if q == "" || strings.Contains(strings.ToLower(athlete.Name), q) || strings.Contains(strings.ToLower(athlete.HomeEventCode), q) {
+			athlete.ApplyQualifyingVols()
 			out = append(out, athlete)
 		}
 	}

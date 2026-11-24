@@ -35,6 +35,6 @@ ansible-playbook deploy/ansible/playbooks/site.yml -i deploy/ansible/inventories
 
 ## Интеграция с s95.ru
 
-Требуется PR в [Sat_9am_5km](https://github.com/vol1ura/Sat_9am_5km): `/cup_sso` и `/api/cup/*` (Bearer token).
+Требуется PR в [Sat_9am_5km](https://github.com/vol1ura/Sat_9am_5km): `/cup/authorize` и `/api/cup/*` (Bearer token).
 
 См. [AGENTS.md](AGENTS.md) для агентов и CI.

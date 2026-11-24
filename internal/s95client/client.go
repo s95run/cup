@@ -33,15 +33,32 @@ func New(baseURL, apiKey string, rps float64) *Client {
 }
 
 type AthleteSearchHit struct {
-	ID                int64  `json:"id"`
-	Code              int64  `json:"code"`
-	Name              string `json:"name"`
-	Gender            string `json:"gender"`
-	HomeEventCode     string `json:"home_event_code"`
-	HomeEventName     string `json:"home_event_name"`
-	ClubName          string `json:"club_name"`
-	RunsCount         int    `json:"runs_count"`
-	VolunteeringCount int    `json:"volunteering_count"`
+	ID                 int64          `json:"id"`
+	Code               int64          `json:"code"`
+	Name               string         `json:"name"`
+	Gender             string         `json:"gender"`
+	HomeEventCode      string         `json:"home_event_code"`
+	HomeEventName      string         `json:"home_event_name"`
+	ClubName           string         `json:"club_name"`
+	RunsCount          int            `json:"runs_count"`
+	VolunteeringByRole map[string]int `json:"volunteering_by_role"`
+	VolunteeringCount  int            `json:"volunteering_count,omitempty"`
+}
+
+// ApplyQualifyingVols sets VolunteeringCount from the role breakdown.
+// S95 reports every published role; Cup qualification ignores "other" and blank keys.
+func (h *AthleteSearchHit) ApplyQualifyingVols() {
+	if len(h.VolunteeringByRole) == 0 {
+		return
+	}
+	sum := 0
+	for role, count := range h.VolunteeringByRole {
+		if role == "" || role == "other" {
+			continue
+		}
+		sum += count
+	}
+	h.VolunteeringCount = sum
 }
 
 type ProtocolResult struct {
@@ -114,6 +131,9 @@ func (c *Client) SearchAthletes(ctx context.Context, q string) ([]AthleteSearchH
 	path := "/api/cup/athletes/search?" + url.Values{"q": {q}}.Encode()
 	if err := c.doJSON(ctx, http.MethodGet, path, nil, true, &out); err != nil {
 		return nil, err
+	}
+	for i := range out.Athletes {
+		out.Athletes[i].ApplyQualifyingVols()
 	}
 	return out.Athletes, nil
 }
